@@ -1203,6 +1203,8 @@ void GazeboMavlinkInterface::pollForMAVLinkMessages()
 
   bool received_actuator = false;
 
+  const int max_tries = 100; // if max_tries are reached that means the lockstep sync has failed so we reset everything
+  int tries = 0;
   do {
     int timeout_ms = (received_first_actuator_ && enable_lockstep_) ? 1000 : 0;
     int ret = ::poll(&fds_[0], N_FDS, timeout_ms);
@@ -1222,7 +1224,7 @@ void GazeboMavlinkInterface::pollForMAVLinkMessages()
         continue;
       }
 
-      if (!(fds_[i].revents & POLLIN)) { 
+      if (!(fds_[i].revents & POLLIN)) {
         continue;
       }
 
@@ -1259,7 +1261,7 @@ void GazeboMavlinkInterface::pollForMAVLinkMessages()
         }
       }
     }
-  } while (!close_conn_ && received_first_actuator_ && !received_actuator && enable_lockstep_ && IsRunning() && !gotSigInt_);
+  } while (!close_conn_ && received_first_actuator_ && !received_actuator && enable_lockstep_ && IsRunning() && !gotSigInt_ && ++tries <= max_tries);
 }
 
 void GazeboMavlinkInterface::acceptConnections()
